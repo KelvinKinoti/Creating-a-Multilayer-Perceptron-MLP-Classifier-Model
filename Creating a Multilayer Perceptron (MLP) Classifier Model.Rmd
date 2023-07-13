@@ -1,0 +1,472 @@
+---
+title: "Employee Attrition"
+output: word_document
+date: "2023-05-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE)
+```
+
+# Introduction
+The goal of this project is to analyze employee data in order to find any hidden issues with human resources management and to offer insights. An exploratory analysis, data manipulation, transformation, and visualization approaches will all be applied. Each of the 18 variables in the dataset has 49654 observations.
+
+# Assumptions
+
+First, we presume that the dataset is correct, dependable, and accurately reflects the organization's actual staff information. We do, however, recognize that the data may have certain inherent constraints or discrepancies, which we will address during the data cleaning process.
+The dataset's completeness was the second presumption. We presume that the dataset includes a wide variety of parameters linked to the job information and attribution of the employees. There might be other factors or facets of human resource management, though, that are not included in this dataset. It is crucial to be aware of these restrictions. 
+Furthermore, we presume that the dataset is a representative sample of the organization's complete personnel population. The conclusions and insights drawn from this research will, however, be specific to the presented information and could not necessarily represent the complete organization's workforce, it is vital to remember.
+Finally, we make the assumption that not all contextual factors that might affect human resources management are included in the dataset. Although the dataset does not clearly mention these issues, we should be aware of their possible impact and think about adding more characteristics. 
+
+# Data Import, Exploration, Cleaning and Pre-processing
+## Data Import
+```{r}
+# Loading Data and libraries
+data<-read.csv("C:\\Users\\user\\Downloads\\employee_attrition-1.csv")
+library(dplyr)
+library(ggplot2)
+colnames(data)
+
+```
+
+First, since the dataset to be used in the data analysis has comma separated values or in other words a CSV file, the function read.csv was used to import it into the R environment. To view a section of the imported data, the head() function was used which creates a new tab.
+```{r}
+head(data)
+```
+
+
+## Data Exploration
+To understand the structure and contents of the dataset,  functions like str() to view the structure, and summary() to get summary statistics.
+
+```{r}
+# Data Exploration
+summary(data)# Structure
+```
+```{r}
+str(data)# Structure
+dim(data)# Rows and Columns
+
+```
+The data has 18 columns and 49653 rows.This dataset has missing values which are marked "Not Applicable". Therefore these rows were omitted per variable anlysis because they are too many. The code below was used to remove them.
+```{r}
+# Remove "Not Applicable" data values
+df <- data[data$termreason_desc != "Not Applicable", ]
+```
+
+```{r}
+# Check the number of rows after removing "Not Applicable" rows
+cat("Number of rows after removal:", nrow(df), "\n")
+
+```
+
+# Question 1
+
+## Analysis 1-1: Find the relationship between job position with attrition
+The table() function was used to construct a frequency table which was later converted into a dataframe. The data columns used in the generated dat frame are called  "job_title", "termreason_desc", and "count". Lastly, a bar graph was plotted based on the contents of the dataframe. 
+
+```{r}
+# Frequency Table Job Title Vs. attrition
+cross_tab1 <- table(df$job_title, df$termreason_desc)
+cross_tab1
+# Convert the counts to a data frame
+attrition_df <- as.data.frame(cross_tab1, stringsAsFactors = FALSE)
+names(attrition_df) <- c("job_title", "termreason_desc", "count")
+
+# Calculate the percentage of attrition within each job position
+attrition_df$percentage <-round( attrition_df$count / sum(attrition_df$count) * 100, 2)
+
+# Sort the data frame by job position in descending order of attrition percentage
+attrition_df <- attrition_df[order(attrition_df$percentage, decreasing = TRUE), ]
+
+# Create a pie chart of attrition percentage by job position
+ggplot(attrition_df, aes(x = "", y = percentage, fill = job_title)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  labs(fill = "Job Position", 
+       title = "Attrition Percentage by Job Position (Pie Chart)") +
+  theme_minimal() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "bottom")
+
+```
+
+The Job titles with the highest attrition rates are produce clerk, meat cutter, cashier, and dairy person. The human resources and management department need to consider intervention methods to maintain staff retention since each of these groups have an attrition rate of more 10%.
+
+## Analysis 1-2: Find the relationship between job age and attrition
+For this analysis, the relationship between the columns age and termreason_desc were evaluated.
+```{r}
+# Frequency Table Job Title Vs. attrition
+cross_tab2 <- table(df$age, df$termreason_desc)
+cross_tab2
+# Convert the counts to a data frame
+attrition_df <- as.data.frame(cross_tab2, stringsAsFactors = FALSE)
+names(attrition_df) <- c("age", "termreason_desc", "count")
+
+# Calculate the percentage of attrition within each job position
+attrition_df$percentage <- attrition_df$count / sum(attrition_df$count) * 100
+
+# Sort the data frame by job position in descending order of attrition percentage
+attrition_df <- attrition_df[order(attrition_df$percentage, decreasing = TRUE), ]
+
+# Create a line plot of attrition percentage by job age
+ggplot(attrition_df, aes(x = age, y = percentage)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(color = "steelblue", size = 3) +
+  labs(x = "Job Age", y = "Attrition Percentage", 
+       title = "Attrition Percentage by Job Age") +
+  theme_minimal()
+
+
+```
+
+Now let's analyze the above line chart. First, it is evident that the highest attrition can be attributed to older adults at age 60 and above, more specifically 65. This can be explained by the assumption this is the retirement age. However, there is an alarming attrition rate from age 20 to 30. It is crucial to investigate further since this age group is the most productive and energetic. Lastly, the attrition for the rest of the groups is very minimal.
+## Analysis 1-3: Find the relationship between Length of Service and attrition
+We can acquire new insights that can improve the results and give a more thorough picture of the attrition patterns within the organization by adding the additional feature "Length of Service" to the analysis of the link between attrition and other variables. Here's how including this additional element can enhance the outcomes:
+
+The "Length of Service" function offers data on the length of time that employees have worked for the company. Their cumulative experience, knowledge, and comfort with the organization's culture, procedures, and systems are reflected in this statistic. This element allows us to evaluate how attrition varies throughout the course of an employee's career.
+
+Analyzing attrition in connection to "Length of Service" allows us to spot patterns or trends over time. It can assist in locating any crucial junctures or benchmarks when attrition is more likely to happen. For instance, there might be increased attrition rates among workers in the first few years of employment or once they reach a certain age, such five or ten years. Targeted retention efforts can be influenced by an understanding of these trends.
+
+The "Length of Service" can be used as a stand-in for employee engagement and satisfaction when measuring both. If employees feel appreciated, engaged, and content with their responsibilities and the work environment, they may be more inclined to stay with the company for a longer period of time. We can assess the effect of engagement and satisfaction on staff retention by looking at attrition across various service periods.
+
+The "Length of Service" function can offer insights about talent development and career growth inside the firm, helping to inform talent development strategies. We can spot regions where employees might look for new possibilities due to limited growth potential by examining turnover rates based on length of service. This data can be used to inform personnel management initiatives including developing development programs, succession planning, or providing possibilities for career growth.
+
+A more focused approach to retention efforts is possible by include the "Length of Service" aspect in the study of attrition. It assists in identifying key points at which interventions, like training, mentoring, or recognition programs, can be put into place to engage and retain staff. Organizations can proactively address potential turnover concerns and customize retention measures by evaluating attrition patterns based on length of service.
+
+Overall, the study is improved by the addition of the "Length of Service" component because it offers a deeper insight of the attrition dynamics inside the business. It clarifies how employee experience, engagement, and career advancement affect attrition, empowering employers to make data-driven decisions to enhance retention tactics and prevent talent loss.
+
+```{r}
+# Frequency Table Length of Service Vs. attrition
+cross_tab3 <- table(df$length_of_service, df$termreason_desc)
+# Convert the counts to a data frame
+attrition_df <- as.data.frame(cross_tab3, stringsAsFactors = FALSE)
+names(attrition_df) <- c("length_of_service", "termreason_desc", "count")
+
+# Order the levels of length_of_service as a factor from 1 to 25
+attrition_df$length_of_service <- factor(attrition_df$length_of_service, levels = 0:25)
+
+# Stacked bar plot of reason for attrition by length of service
+ggplot(attrition_df, aes(x = length_of_service, y = count, fill = termreason_desc)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Length of Service", y = "Count",
+       title = "Reason for Attrition by Length of Service") +
+  theme_minimal()
+
+```
+There is an alarming rate of resignation for individuals who have short length of service at the organization. These employees' length of service range is from 0 to 7 year. Another concern is the early retirement at only 8 or 13 years of  service.
+
+
+# Conclusion
+In summary, the analysis of the dataset on employees' job information and attribution has shed light on previously unseen issues in the administration of human resources at the company. We have learned more about the causes of employee turnover after experimenting with several methods of data exploration, manipulation, transformation, and visualization.
+
+We analyzed the correlation between job function, age, and turnover, and we also took into account the impact of another factor, "Length of Service," on turnover. We have been able to strengthen the company's retention efforts and make better decisions as a result of the data we have gathered and analyzed.
+
+We discovered that some jobs had significantly higher turnover than others, signaling potential trouble spots that needed more research. Furthermore, we identified specific age groups that may be more prone to attrition based on employment age, emphasizing the necessity for targeted retention efforts for those segments by conducting an analysis of attrition based on job age.
+
+In addition, we were able to learn how employee experience, engagement, and advancement affect turnover by adding the "Length of Service" as an optional feature. Recognizing trends in employee turnover over time is useful for personnel management, bolstering career advancement efforts, and head-offing turnover risks.
+
+The results of this study offer useful information for HR managers to consider. They provide the basis for enacting strategic retention measures, encouraging employee participation, and establishing conditions conducive to professional development and fulfillment. Employee retention, productivity, and morale can all be boosted, as well as the overall health of the company, by fixing the underlying problems that have been uncovered.
+
+For human resource management to remain proactive, it is essential that data pertaining to employees be constantly monitored and analyzed. The organization's ability to adapt and respond to the problems of maintaining a competent and motivated staff depends on regular evaluations and modifications to retention strategies based on changing dynamics and evolving employee demands.
+
+# Question 2:  How does gender impact attrition?
+```{r}
+library(ggplot2)
+
+# Calculate the attrition rate for each gender
+attrition_gender <- data %>%
+  group_by(gender_full) %>%
+  summarise(attrition_rate = sum(STATUS == "TERMINATED") / n()) %>%
+  mutate(attrition_rate = attrition_rate * 100)  # Convert to percentage
+
+# Bar plot of attrition rates by gender
+ggplot(attrition_gender, aes(x = gender_full, y = attrition_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Gender", y = "Attrition Rate (%)",
+       title = "Attrition Rate by Gender") +
+  theme_minimal()
+
+
+```
+Based on bar plot, it is evident that females have a higher attrition rate when compared to males
+```{r}
+# Age distribution for male and female employees who left the company
+ggplot(data, aes(x = age, fill = gender_full)) +
+  geom_histogram(binwidth = 5, alpha = 0.7) +
+  labs(x = "Age", y = "Count",
+       title = "Age Distribution of Employees Who Left by Gender") +
+  theme_minimal() +
+  facet_wrap(~ gender_full, ncol = 2)
+
+
+```
+
+However, we can conclude that the distribution for attrition for both genders are generally similar at all ages.
+```{r}
+# Box plot of length of service for male and female terminated employees
+ggplot(data[data$STATUS == "TERMINATED", ], aes(x = gender_full, y = length_of_service)) +
+  geom_boxplot(fill = "steelblue", color = "black", outlier.shape = NA) +
+  labs(x = "Gender", y = "Length of Service",
+       title = "Length of Service Distribution for Terminated Employees by Gender") +
+  theme_minimal()
+
+
+```
+On the other hand, the mean length of service of terminated employees is significantly higher in females than males.
+```{r}
+# Reasons for attrition by gender
+attrition_reason_gender <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(gender_full, termreason_desc) %>%
+  summarise(count = n()) %>%
+  arrange(gender_full, desc(count))
+
+ggplot(attrition_reason_gender, aes(x = termreason_desc, y = count, fill = gender_full)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Reason for Attrition", y = "Count",
+       title = "Reasons for Attrition by Gender") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+```
+First, employee attrition by either through a layoff or resignation is pretty much similar for both genders. However, more females are likely to retire compared to their male counterparts.
+
+# Question 3
+```{r}
+# Calculate the attrition rate for each department
+attrition_department <- data %>%
+  group_by(department_name) %>%
+  summarise(attrition_rate = sum(STATUS == "TERMINATED") / n()) %>%
+  mutate(attrition_rate = attrition_rate * 100)  # Convert to percentage
+
+# Bar plot of attrition rates by department
+ggplot(attrition_department, aes(x = department_name, y = attrition_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Department", y = "Attrition Rate (%)",
+       title = "Attrition Rate by Department") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The above bar plot gives the the attrition rate per department in the company. The department with the lowest attrition rate is Executive while the IT department has the highest attrition rate.
+```{r}
+
+# Identify specific job titles with higher attrition rates within each department
+attrition_job_title <- data %>%
+  group_by(department_name, job_title) %>%
+  summarise(attrition_rate = sum(STATUS == "TERMINATED") / n()) %>%
+  filter(attrition_rate > 0.1)  # Consider job titles with attrition rate > 10%
+
+# Bar plot of attrition rates by job title within departments
+ggplot(attrition_job_title, aes(x = job_title, y = attrition_rate, fill = department_name)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Job Title", y = "Attrition Rate (%)",
+       title = "Attrition Rate by Job Title within Departments") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+
+
+```
+This analysis goes a little bit deeper into the members of each department. The directors in Audit, Compensation, Investments, and Labor Relations have the highest likelihood of leaving the company. In addition, the Systems Analyst has an almost similar high attrition rate.
+
+```{r}
+# Length of service distribution for terminated employees by department
+ggplot(data[data$STATUS == "TERMINATED", ], aes(x = department_name, y = length_of_service)) +
+  geom_boxplot(fill = "steelblue", color = "black", outlier.shape = NA) +
+  labs(x = "Department", y = "Length of Service",
+       title = "Length of Service Distribution for Terminated Employees by Department") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+Moving on, we can inspect the length of service of employees per department.The accounting department had the mean in length of service, followed closely by employees in Employee Records, HR Technology, Accounts Payable, and Accounts Receivable departments.
+```{r}
+# Reasons for attrition by department
+attrition_reason_department <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(department_name, termreason_desc) %>%
+  summarise(count = n()) %>%
+  arrange(department_name, desc(count))
+
+ggplot(attrition_reason_department, aes(x = termreason_desc, y = count, fill = department_name)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Reason for Attrition", y = "Count",
+       title = "Reasons for Attrition by Department") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
+
+It is evident that retirement is the most common reason for employees leaving the company, followed by resignation and ,lastly, layoff.
+
+# Question 4:  How does the location impact attrition?
+```{r}
+library(ggplot2)
+
+# Calculate the attrition rate for each location
+attrition_location <- data %>%
+  group_by(city_name) %>%
+  summarise(attrition_rate = sum(STATUS == "TERMINATED") / n()) %>%
+  mutate(attrition_rate = attrition_rate * 100)  # Convert to percentage
+
+# Bar plot of attrition rates by location
+ggplot(attrition_location, aes(x = city_name, y = attrition_rate)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Location", y = "Attrition Rate (%)",
+       title = "Attrition Rate by Location") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+This analysis focuses on the location where the employees are stationed. Employees in New Westminister has the highest attrition rate, with Pitt Meadows being a close second. 
+
+```{r}
+# Length of service distribution for terminated employees by location
+ggplot(df[df$STATUS == "TERMINATED", ], aes(x = city_name, y = length_of_service)) +
+  geom_boxplot(fill = "steelblue", color = "black", outlier.shape = NA) +
+  labs(x = "Location", y = "Length of Service",
+       title = "Length of Service Distribution for Terminated Employees by Location") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+At first glance, the mean length of service ranges from  7 to 13 years. The outlier is Ocean Falls which has the highest mean years of service.
+```{r}
+# Reasons for attrition by location
+attrition_reason_location <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(city_name, termreason_desc) %>%
+  summarise(count = n()) %>%
+  arrange(city_name, desc(count))
+
+ggplot(attrition_reason_location, aes(x = termreason_desc, y = count, fill = city_name)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Reason for Attrition", y = "Count",
+       title = "Reasons for Attrition by Location") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
+Lastly, just like in previous analyses the reason for attrition are retirement, resignation, and layoff in a decreasing order.
+
+# Question 5: Are there any temporal patterns in attrition?
+This analysis seek to identify pattern and trend in attrition based on months and years of employee termination.
+```{r}
+
+# Convert the recorddate_key to date format, handling NA values
+data$recorddate <- as.Date(ifelse(grepl("\\d{1,2}/\\d{1,2}/\\d{4}", data$recorddate_key),
+                                data$recorddate_key,
+                                NA),
+                         format = "%m/%d/%Y")
+data$year <- lubridate::year(data$recorddate)
+data$month <- lubridate::month(data$recorddate)
+
+# Calculate the attrition count by year and month
+attrition_temporal <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(year, month) %>%
+  summarise(attrition_count = n())
+
+# Line plot of attrition count over time
+ggplot(attrition_temporal, aes(x = month, y = attrition_count, group = year)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(color = "steelblue", size = 3) +
+  labs(x = "Month", y = "Attrition Count", 
+       title = "Attrition Count Over Time") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 1:12, labels = month.abb)
+
+
+
+```
+The above plot visualizes the attrition count over time using a line plot. In the months of November and December there is significantly higher attrition counts compared to the rest of the months.This can be exaplained by the desire to make changes at the end of the year in anticipation of the coming year
+```{r}
+# Attrition count by year
+attrition_yearly <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(year) %>%
+  summarise(attrition_count = n())
+
+# Bar plot of attrition count by year
+ggplot(attrition_yearly, aes(x = year, y = attrition_count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Year", y = "Attrition Count",
+       title = "Attrition Count by Year") +
+  theme_minimal() +
+  scale_x_continuous(labels = function(x) floor(x))
+
+```
+On the other hand this bar plot seeks to investigate the attrition rate based on years. There have more attrition in 2014 compared to other years. Now let's do a more comprehensive analysis using job title to evaluate their attrition over the years.
+
+Secondly, we an review the relation between the department and the attrition rate over the years.
+
+```{r}
+# Investigate if there are specific departments with varying attrition rates over the years
+attrition_department <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(year, department_name) %>%
+  summarise(attrition_count = n())
+
+# Line plot of attrition count by department over the years
+ggplot(attrition_department, aes(x = year, y = attrition_count, color = department_name)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  labs(x = "Year", y = "Attrition Count",
+       title = "Attrition Count by Department Over the Years") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Set1")
+
+
+
+```
+The above line plot shows that most departments have stationary rate of attrition over the years. The only outlier would be the customer service department. From the year 2010, the attrition count increased significantly and continued to reach an all time high in around 2016.
+
+```{r}
+# Explore correlation between length of service and attrition rates over time
+# Calculate the average length of service by year and month
+length_of_service_temporal <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(year, month) %>%
+  summarise(avg_length_of_service = mean(length_of_service))
+
+# Line plot of average length of service over time
+ggplot(length_of_service_temporal, aes(x = month, y = avg_length_of_service, group = year)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(color = "steelblue", size = 3) +
+  labs(x = "Month", y = "Average Length of Service", 
+       title = "Average Length of Service Over Time") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 1:12, labels = month.abb)
+
+```
+The above line plot shows that there is no significant correlation between the length of service and attrition rate over months. 
+```{r}
+# Determine if the reasons for attrition have changed or remained consistent over the years
+attrition_reason_yearly <- data %>%
+  filter(STATUS == "TERMINATED") %>%
+  group_by(year, termreason_desc) %>%
+  summarise(attrition_count = n())
+
+
+# Stacked bar plot of attrition count by reason over the years
+ggplot(attrition_reason_yearly, aes(x = year, y = attrition_count, fill = termreason_desc)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Year", y = "Attrition Count",
+       title = "Attrition Count by Reason Over the Years") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(breaks = unique(floor(attrition_reason_yearly$year)))
+
+```
+In 2006 to 2009 the most frequent attrition reason was retirement. However, in 2011, 2012 and 2013 resignations were more than the retirees. Lastly, in 2014 nad 2015 there were high number of layoffs compared to other reasons of termination.
